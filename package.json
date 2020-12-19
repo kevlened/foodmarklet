@@ -4,6 +4,7 @@
   "main": "index.min.js",
   "repository": "git@github.com:kevlened/foodmarklet.git",
   "author": "Len Boyette <boyettel@gmail.com>",
+  "license": "AGPL-3.0-or-later",
   "scripts": {
     "minify": "minify index.js > index.min.js",
     "standalone": "yarn minify && printf \"javascript:void(/* v$npm_package_version */(()=>{%s})());\" \"$(cat index.min.js | sed 's/%/%25/g')\" > standalone",
@@ -11,6 +12,7 @@
   },
   "files": [
     "README.md",
+    "LICENSE",
     "index.js",
     "index.min.js",
     "standalone"
