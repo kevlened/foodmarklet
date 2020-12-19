@@ -1,6 +1,6 @@
 {
   "name": "foodmarklet",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "main": "index.min.js",
   "repository": "git@github.com:kevlened/foodmarklet.git",
   "author": "Len Boyette <boyettel@gmail.com>",

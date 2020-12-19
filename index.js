@@ -5,9 +5,11 @@ loop:
 for (let script of scripts) {
 	try {
 		// Try to parse each script as json
-		let json = JSON.parse(script.innerHTML);
+    let json = JSON.parse(script.innerHTML);
+    
+    console.log('Parsed script', json);
 
-		if (json['@graph']) {
+    if (json['@type'].toLowerCase() !== 'recipe' && json['@graph']) {
 			json = json['@graph'];
 		}
 
@@ -19,8 +21,31 @@ for (let script of scripts) {
 		// Find the recipe schema
 		for (let schema of json) {
 			if (schema['@type'].toLowerCase() === 'recipe') {
+        console.log('Recipe found', schema);
 
-				// TODO: Apply mods for certain domains
+        // Apply mods for certain domains
+        switch (location.host.replace(/^www\./, '')) {
+
+          case 'delish.com':
+            // https://www.delish.com/cooking/recipe-ideas/a28626172/how-to-cook-boneless-chicken-thigh-oven-recipe/
+            schema.recipeInstructions =
+              Array.from(document.querySelectorAll('div[class="direction-lists"] li'))
+              .map(el => ({text: el.innerText}));
+            break;
+
+        }
+        
+        // Ensure formats
+        if (!Array.isArray(schema.image)) {
+          schema.image = [schema.image.url];
+        }
+
+        if (!Array.isArray(schema.recipeInstructions)) {
+          schema.recipeInstructions = [{text: schema.recipeInstructions}];
+        }
+
+        // Remove markup
+        schema.recipeIngredient = schema.recipeIngredient.map(i => i.replaceAll(/<.+?>/g, ' '));
 
 				// Render the recipe
 				document.body.innerHTML =
@@ -223,5 +248,8 @@ li {
 				break loop;
 			}
 		}
-	} catch (e) {}
+  } catch (e) {
+    console.log(e);
+  }
+  console.log(`No recipe found in ${scripts.length} scripts`);
 }
