@@ -3,71 +3,71 @@ let scripts = document.querySelectorAll('script[type="application/ld+json"]');
 
 loop:
 for (let script of scripts) {
-	try {
-		// Try to parse each script as json
+  try {
+    // Try to parse each script as json
     let json = JSON.parse(script.innerHTML);
     
     console.log('Parsed script', json);
-
+    
     if (Array.isArray(json['@type'])) {
       json['@type'] = json['@type'][0];
     }
-
+    
     if (
       (!json['@type'] || json['@type'].toLowerCase() !== 'recipe') &&
       json['@graph']) {
-			json = json['@graph'];
-		}
-
-		// Ensure it's an array
-		if (!Array.isArray(json)) {
-			json = [json];
-		}
-
-		// Find the recipe schema
-		for (let schema of json) {
-      console.log('Checking schema', schema);
-
-      // Ensure @type is not an array
-      if (Array.isArray(schema['@type'])) {
-        schema['@type'] = schema['@type'][0];
+        json = json['@graph'];
       }
-
-			if (schema['@type'].toLowerCase() === 'recipe') {
-        console.log('Recipe found', schema);
-
-        // Apply mods for certain domains
-        switch (location.host.replace(/^www\./, '')) {
-
-          case 'delish.com':
-            // https://www.delish.com/cooking/recipe-ideas/a28626172/how-to-cook-boneless-chicken-thigh-oven-recipe/
-            schema.recipeInstructions =
-              Array.from(document.querySelectorAll('div[class="direction-lists"] li'))
-              .map(el => ({ text: el.innerText }));
-            break;
-
+      
+      // Ensure it's an array
+      if (!Array.isArray(json)) {
+        json = [json];
+      }
+      
+      // Find the recipe schema
+      for (let schema of json) {
+        console.log('Checking schema', schema);
+        
+        // Ensure @type is not an array
+        if (Array.isArray(schema['@type'])) {
+          schema['@type'] = schema['@type'][0];
         }
         
-        // Ensure formats
-        if (Array.isArray(schema.image)) {
-          let first = schema.image[0];
-          schema.image = first.url || first;
-        } else {
-          schema.image = [schema.image.url || schema.image];
-        }
-
-        if (!Array.isArray(schema.recipeInstructions)) {
-          schema.recipeInstructions = [{text: schema.recipeInstructions}];
-        }
-
-        // Remove markup
-        schema.recipeIngredient = schema.recipeIngredient.map(i => i.replaceAll(/<.+?>/g, ' '));
-
-				// Render the recipe
-				document.body.innerHTML =
+        if (schema['@type'].toLowerCase() === 'recipe') {
+          console.log('Recipe found', schema);
+          
+          // Apply mods for certain domains
+          switch (location.host.replace(/^www\./, '')) {
+            
+            case 'delish.com':
+            // https://www.delish.com/cooking/recipe-ideas/a28626172/how-to-cook-boneless-chicken-thigh-oven-recipe/
+            schema.recipeInstructions =
+            Array.from(document.querySelectorAll('div[class="direction-lists"] li'))
+            .map(el => ({ text: el.innerText }));
+            break;
+            
+          }
+          
+          // Ensure formats
+          if (Array.isArray(schema.image)) {
+            let first = schema.image[0];
+            schema.image = first.url || first;
+          } else {
+            schema.image = [schema.image.url || schema.image];
+          }
+          
+          if (!Array.isArray(schema.recipeInstructions)) {
+            schema.recipeInstructions = [{text: schema.recipeInstructions}];
+          }
+          
+          // Remove markup
+          schema.recipeIngredient = schema.recipeIngredient.map(i => i.replaceAll(/<.+?>/g, ' '));
+          
+          // Render the recipe
+          document.body.innerHTML =
 `
 <div class="recipe-image">
-	<img src="${schema.image}" alt="An image of ${schema.name}" />
+<img src="${schema.image}" alt="An image of ${schema.name}" />
 </div>
 <h1>${schema.name}</h1>
 ${schema.description ? `<p><i>${schema.description}</i></p>` : ''}
@@ -76,27 +76,27 @@ ${schema.description ? `<p><i>${schema.description}</i></p>` : ''}
 
 <ul class="ingredients-list">
 ${schema.recipeIngredient.reduce((prev, curr) => prev +
-	`<li>${curr}</li>`
-, '')}
-</ul>
-
-<h2>Directions</h2>
-
-<ol style="margin:0.125in; padding:0; overflow: visible; display: block">
-${schema.recipeInstructions.reduce((prev, curr) => prev +
-	`<li>${curr.text}<br></li>`
-, '')}
-</ol>
-
-<a href="${window.location}">${window.location}</a>
-`;
-
-				// Clear all the styles
-				document.querySelectorAll('style, link[rel="stylesheet"]')
-					.forEach(el => el.parentNode.removeChild(el));
-
-				// Add custom styles
-				document.head.insertAdjacentHTML('beforeend',
+  `<li>${curr}</li>`
+  , '')}
+  </ul>
+  
+  <h2>Directions</h2>
+  
+  <ol style="margin:0.125in; padding:0; overflow: visible; display: block">
+  ${schema.recipeInstructions.reduce((prev, curr) => prev +
+    `<li>${curr.text}<br></li>`
+    , '')}
+  </ol>
+  
+  <a href="${window.location}">${window.location}</a>
+  `;
+              
+              // Clear all the styles
+              document.querySelectorAll('style, link[rel="stylesheet"]')
+              .forEach(el => el.parentNode.removeChild(el));
+              
+              // Add custom styles
+              document.head.insertAdjacentHTML('beforeend',
 `
 <style type="text/css">
 * {
@@ -146,25 +146,25 @@ nav.nav {
 
 @media screen and (min-width: 480px) {
   body {
-      max-width: 800px;
+    max-width: 800px;
   }
 }
 @media screen and (min-width: 660px) {
   .supported-list {
-      columns: 2;
+    columns: 2;
   }
 }
 @media screen and (min-width: 980px) {
   .supported-list {
-      columns: 3;
+    columns: 3;
   }
 }
 @media screen and (min-width: 1220px) {
   :root, html, body {
-      font-size: 18px;
+    font-size: 18px;
   }
   body {
-      max-width: 1000px;
+    max-width: 1000px;
   }
 }
 
@@ -260,12 +260,12 @@ li {
 }
 </style>
 `);
-				
-				break loop;
-			}
-		}
-  } catch (e) {
-    console.log(e);
-  }
-  console.log(`No recipe found in ${scripts.length} scripts`);
-}
+              
+              break loop;
+            }
+          }
+        } catch (e) {
+          console.log(e);
+        }
+        console.log(`No recipe found in ${scripts.length} scripts`);
+      }
