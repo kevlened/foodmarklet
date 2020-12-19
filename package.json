@@ -17,8 +17,7 @@
     "index.min.js",
     "standalone"
   ],
-  "dependencies": {
-    "minify": "^6.0.1",
-    "uglify-js": "^3.12.2"
+  "devDependencies": {
+    "minify": "^6.0.1"
   }
 }
