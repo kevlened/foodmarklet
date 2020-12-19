@@ -1,13 +1,13 @@
 {
   "name": "foodmarklet",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "main": "index.min.js",
   "repository": "git@github.com:kevlened/foodmarklet.git",
   "author": "Len Boyette <boyettel@gmail.com>",
   "scripts": {
     "minify": "minify index.js > index.min.js",
     "standalone": "yarn minify && printf \"javascript:void(/* v$npm_package_version */(()=>{%s})());\" \"$(cat index.min.js | sed 's/%/%25/g')\" > standalone",
-    "release": "yarn standalone && git commit -am $npm_package_version && git tag $npm_package_version && git push && git push --tags && npm login && npm publish"
+    "release": "yarn standalone && git commit -am $npm_package_version && git tag $npm_package_version && git push && git push --tags && npm publish"
   },
   "files": [
     "README.md",
