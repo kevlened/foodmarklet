@@ -9,7 +9,13 @@ for (let script of scripts) {
     
     console.log('Parsed script', json);
 
-    if (json['@type'].toLowerCase() !== 'recipe' && json['@graph']) {
+    if (Array.isArray(json['@type'])) {
+      json['@type'] = json['@type'][0];
+    }
+
+    if (
+      (!json['@type'] || json['@type'].toLowerCase() !== 'recipe') &&
+      json['@graph']) {
 			json = json['@graph'];
 		}
 
@@ -20,6 +26,13 @@ for (let script of scripts) {
 
 		// Find the recipe schema
 		for (let schema of json) {
+      console.log('Checking schema', schema);
+
+      // Ensure @type is not an array
+      if (Array.isArray(schema['@type'])) {
+        schema['@type'] = schema['@type'][0];
+      }
+
 			if (schema['@type'].toLowerCase() === 'recipe') {
         console.log('Recipe found', schema);
 
@@ -30,14 +43,17 @@ for (let script of scripts) {
             // https://www.delish.com/cooking/recipe-ideas/a28626172/how-to-cook-boneless-chicken-thigh-oven-recipe/
             schema.recipeInstructions =
               Array.from(document.querySelectorAll('div[class="direction-lists"] li'))
-              .map(el => ({text: el.innerText}));
+              .map(el => ({ text: el.innerText }));
             break;
 
         }
         
         // Ensure formats
-        if (!Array.isArray(schema.image)) {
-          schema.image = [schema.image.url];
+        if (Array.isArray(schema.image)) {
+          let first = schema.image[0];
+          schema.image = first.url || first;
+        } else {
+          schema.image = [schema.image.url || schema.image];
         }
 
         if (!Array.isArray(schema.recipeInstructions)) {
@@ -51,7 +67,7 @@ for (let script of scripts) {
 				document.body.innerHTML =
 `
 <div class="recipe-image">
-	<img src="${schema.image[0]}" alt="An image of ${schema.name}" />
+	<img src="${schema.image}" alt="An image of ${schema.name}" />
 </div>
 <h1>${schema.name}</h1>
 ${schema.description ? `<p><i>${schema.description}</i></p>` : ''}
