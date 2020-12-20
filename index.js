@@ -1,6 +1,6 @@
 // Utility query methods
-let qs = q => document.querySelector(q);
-let qsa = q => Array.from(document.querySelectorAll(q));
+let qs = (q, el = document) => el.querySelector(q);
+let qsa = (q, el = document) => Array.from(el.querySelectorAll(q));
 
 // Find the application/ld+json
 let scripts = qsa('script[type="application/ld+json"]');
@@ -61,35 +61,66 @@ for (let script of scripts) {
   }
 }
 
-// Exceptions for sites
-if (data) {
-  switch (host) {
-
-    case 'delish.com':
-    // https://www.delish.com/cooking/recipe-ideas/a28626172/how-to-cook-boneless-chicken-thigh-oven-recipe/
-    data.recipeInstructions =
-    qsa('div[class="direction-lists"] li')
-    .map(el => ({ text: el.innerText }));
-    break;
-
-  }
-} else {
-  switch (host) {
-
-    case 'epicurious.com':
+// Use the markup version if no ld+json
+if (!data) {
+  let el =
+    qs('[itemtype="http://schema.org/Recipe"]') ||
+    qs('[itemtype="https://schema.org/Recipe"]');
+  if (el) {
     data = {
-      name: qs('h1[itemprop="name"]').innerText,
+      name: qs('[itemprop="name"]', el).innerText,
       description: '',
-      image: qs('img[srcset].photo').srcset,
+      image:
+        qs('meta[itemprop="image"]')?.content ||
+        qs('[property="og:image"]')?.content,
       recipeIngredient:
-        qsa('li[itemprop="ingredients"]')
+        qsa('[itemprop="recipeIngredient"],[itemprop="ingredient"]', el)
         .map(el => el.innerText),
       recipeInstructions:
-        qsa('li.preparation-step')
+        qsa('li[itemprop="recipeInstructions"],[itemprop="recipeInstructions"] p,[itemprop="recipeInstructions"] li,[itemprop="instructions"] p', el)
+        // Filter instructions with children (should only have text)
+        .filter(el => !el.querySelector('*'))
         .map(el => ({text: el.innerText}))
     };
-    break;
+  }
+}
 
+// Exceptions for sites
+if (data) {
+
+  if (host === 'delish.com') {
+    // https://www.delish.com/cooking/recipe-ideas/a28626172/how-to-cook-boneless-chicken-thigh-oven-recipe/
+    data.recipeInstructions =
+      qsa('div[class="direction-lists"] li')
+      .map(el => ({ text: el.innerText }));
+  }
+
+  else if (host === 'bettycrocker.com') {
+    // https://www.bettycrocker.com/recipes/gold-medal-flour-classic-biscuits/1e6f1425-0362-4782-893e-3b2930003193
+    let ingredients = qsa('.recipePartIngredient');
+    ingredients = ingredients.length ? ingredients : qsa('.ingredients-item-name');
+    data.recipeIngredient = ingredients
+      .map(el => el.innerText)
+      .filter(text =>
+        text &&
+        !text.toLowerCase().includes('advertisement') &&
+        !text.toLowerCase().includes('add all ingredients to list')
+      );
+    
+    data.recipeInstructions = qsa('.recipePartStep .recipePartStepDescription')
+      .map(el => ({ text: el.innerText }));
+  }
+
+  else if (host === 'epicurious.com') {
+    // https://www.epicurious.com/recipes/food/views/fried-rice-354350
+    if (!data.recipeIngredient.length) {
+      data.recipeIngredient =  qsa('li[itemprop="ingredients"]').map(el => el.innerText);
+    }
+  }
+
+  else if (host === 'thepioneerwoman.com') {
+    // https://www.thepioneerwoman.com/food-cooking/recipes/a9422/my-favorite-christmas-cookies-from-childhood-and-beyond/
+      data.recipeInstructions =  qsa('.direction-lists li').map(el => ({text: el.innerText}));
   }
 }
 
@@ -102,7 +133,7 @@ if (data) {
   // Remove leading step numbers in instructions
   data.recipeInstructions = data.recipeInstructions.map(
     i => ({
-      text: i.text.replace(/^\d+\.\s*?/, '')
+      text: (i.text || i).replace(/^\d+\.\s*?/, '')
     })
   );
   
@@ -139,7 +170,7 @@ ${data.recipeIngredient.reduce((prev, curr) => prev +
   qsa('style, link[rel="stylesheet"]')
   .map(el => el.parentNode.removeChild(el));
 
-  
+
   // Add custom styles
   document.head.insertAdjacentHTML('beforeend',
 `
@@ -306,5 +337,5 @@ li {
 </style>
 `);
 } else {
-  console.log(`No recipe found in ${scripts.length} scripts`);
+  console.log('No recipe found');
 }

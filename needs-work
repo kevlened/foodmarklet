@@ -1,11 +1,23 @@
 Find exceptions in https://github.com/hhursev/recipe-scrapers/tree/master/recipe_scrapers
 
-atelierdeschefs.fr
-bbc.com
-bettycrocker.com
-budgetbytes.com
-closetcooking.com
-cookieandkate.com
-cookstr.com
-copykat.com
-countryliving.com
+// Confirmed
+atelierdeschefs.fr // malformed json
+recipes.farmhousedelivery.com
+fitmencook.com
+foodnetwork.com
+gousto.co.uk
+heb.com
+receitas.ig.com.br
+justbento.com
+kennymcgovern.com
+mindmegette.hu
+motherthyme.com
+healthyeating.nhlbi.nih.gov
+panelinha.com.br
+paninihappy.com
+simplyquinoa.com
+streetkitchen.hu
+sunbasket.com
+vegolosi.it
+en.wikibooks.org
+yummly.com
