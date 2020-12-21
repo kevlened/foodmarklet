@@ -49,7 +49,10 @@ for (let script of scripts) {
         }
         
         if (!Array.isArray(schema.recipeInstructions)) {
-          schema.recipeInstructions = [{text: schema.recipeInstructions}];
+          // Split single line instructions by newline
+          schema.recipeInstructions = schema.recipeInstructions
+            .split(/\n+/g)
+            .map(s => ({text: s}));
         }
         
         data = schema;
@@ -140,30 +143,28 @@ if (data) {
   // Render the recipe
   document.body.innerHTML =
 `
-<div class="recipe-image">
-<img src="${data.image}" alt="An image of ${data.name}" />
-</div>
+<div class="recipe-image"><img src="${data.image}" alt="An image of ${data.name}" /></div>
+
 <h1>${data.name}</h1>
+
 ${data.description ? `<p><i>${data.description}</i></p>` : ''}
 
 <h2>Ingredients</h2>
-
 <ul class="ingredients-list">
 ${data.recipeIngredient.reduce((prev, curr) => prev +
   `<li>${curr}</li>`
   , '')}
   </ul>
   
-  <h2>Directions</h2>
-  
-  <ol style="margin:0.125in; padding:0; overflow: visible; display: block">
-  ${data.recipeInstructions.reduce((prev, curr) => prev +
-    `<li>${curr.text}<br></li>`
-    , '')}
-  </ol>
-  
-  <a href="${window.location}">${window.location}</a>
-  `;
+<h2>Directions</h2>
+<ol style="margin:0.125in; padding:0; overflow: visible; display: block">
+${data.recipeInstructions.reduce((prev, curr) => prev +
+  `<li>${curr.text}<br></li>`
+  , '')}
+</ol>
+
+<a href="${window.location}">${window.location}</a>
+`;
 
 
   // Clear all the styles
@@ -211,28 +212,9 @@ a {
   text-decoration: none;
 }
 
-a:hover {
-  text-decoration: underline;
-}
-
-nav.nav {
-  text-align: right;
-  font-size: 0.6875rem; /* 11px */
-}
-
 @media screen and (min-width: 480px) {
   body {
     max-width: 800px;
-  }
-}
-@media screen and (min-width: 660px) {
-  .supported-list {
-    columns: 2;
-  }
-}
-@media screen and (min-width: 980px) {
-  .supported-list {
-    columns: 3;
   }
 }
 @media screen and (min-width: 1220px) {
