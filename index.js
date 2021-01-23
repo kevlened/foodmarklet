@@ -44,15 +44,27 @@ for (let script of scripts) {
         if (Array.isArray(schema.image)) {
           let first = schema.image[0];
           schema.image = first.url || first;
-        } else {
+        } else if (schema.image) {
           schema.image = schema.image.url || schema.image;
         }
         
-        if (!Array.isArray(schema.recipeInstructions)) {
-          // Split single line instructions by newline
-          schema.recipeInstructions = schema.recipeInstructions
-            .split(/\n+/g)
-            .map(s => ({text: s}));
+        if (schema.recipeInstructions) {
+          if (Array.isArray(schema.recipeInstructions)) {
+            const recipeInstructions = []
+            for (const i of schema.recipeInstructions) {
+              if (i.itemListElement) {
+                for (const el of i.itemListElement) {
+                  recipeInstructions.push(el);
+                }
+              } else recipeInstructions.push(i);
+            }
+            schema.recipeInstructions = recipeInstructions;
+          } else {
+            // Split single line instructions by newline
+            schema.recipeInstructions = schema.recipeInstructions
+              .split(/\n+/g)
+              .map(s => ({text: s}));
+          }
         }
         
         data = schema;
@@ -78,9 +90,9 @@ if (!data) {
         qs('[property="og:image"]')?.content,
       recipeIngredient:
         qsa('[itemprop="recipeIngredient"],[itemprop="ingredient"]', el)
-        .map(el => el.innerText),
+        .map(el => el.content || el.innerText),
       recipeInstructions:
-        qsa('li[itemprop="recipeInstructions"],[itemprop="recipeInstructions"] p,[itemprop="recipeInstructions"] li,[itemprop="instructions"] p', el)
+        qsa('[itemprop="recipeInstructions"],[itemprop="recipeInstructions"] p,[itemprop="recipeInstructions"] li,[itemprop="instructions"] p', el)
         // Filter instructions with children (should only have text)
         .filter(el => !el.querySelector('*'))
         .map(el => ({text: el.innerText}))
@@ -114,31 +126,63 @@ if (data) {
       .map(el => ({ text: el.innerText }));
   }
 
-  else if (host === 'epicurious.com') {
-    // https://www.epicurious.com/recipes/food/views/fried-rice-354350
-    if (!data.recipeIngredient.length) {
-      data.recipeIngredient =  qsa('li[itemprop="ingredients"]').map(el => el.innerText);
-    }
-  }
-
   else if (host === 'thepioneerwoman.com') {
     // https://www.thepioneerwoman.com/food-cooking/recipes/a9422/my-favorite-christmas-cookies-from-childhood-and-beyond/
-      data.recipeInstructions =  qsa('.direction-lists li').map(el => ({text: el.innerText}));
+    data.recipeInstructions =  qsa('.direction-lists li').map(el => ({text: el.innerText}));
+  }
+
+  else if (host === 'mindmegette.hu') {
+    // https://www.mindmegette.hu/vanilias-narancsos-csiga.recept/
+    data.recipeInstructions =  qsa('.instructions li').map(el => ({text: el.innerText}));
+    data.recipeInstructions = data.recipeInstructions.filter(i => !i.text.includes('>>>'));
+  }
+    
+  else if (host === 'fitmencook.com') {
+    data.recipeInstructions =  qsa('.recipe-steps p, .recipe-steps li').map(el => ({text: el.innerText}));
+    data.recipeIngredient =  qsa('.recipe-ingredients li').map(el => ({text: el.innerText}));
+  }
+
+  if (!data.recipeIngredient || !data.recipeIngredient.length) {
+    // https://www.epicurious.com/recipes/food/views/fried-rice-354350
+    // https://www.archanaskitchen.com/savory-french-toast-with-cheesy-garlic-scrambled-eggs
+    data.recipeIngredient =  qsa('li[itemprop="ingredients"]').map(el => el.innerText);
   }
 }
 
+if (host === 'healthyeating.nhlbi.nih.gov') {
+  // https://healthyeating.nhlbi.nih.gov/recipedetail.aspx?linkId=11&cId=1&rId=4
+  
+  data = {
+    name: qs('#recipe_detail_header h1').innerText,
+    description: qs('.recipe_detail_subtext').innerText,
+    recipeInstructions: qsa('.steptext').map(el => ({text: el.innerText}))
+  };
+
+  const recipeIngredient = [];
+  for (const p of qsa('.tbl_ingredients p')) {
+    console.log(p.innerHTML);
+    for (const text of p.innerHTML.split('<br>')) {
+      recipeIngredient.push({text});
+    }
+  }
+  data.recipeIngredient = recipeIngredient;
+}
+
 if (data) {
+
   // Remove markup in ingredients
   data.recipeIngredient = data.recipeIngredient.map(
-    i => i.replaceAll(/<.+?>/g, ' ')
+    i => (i.text || i).replaceAll(/<.+?>/g, ' ')
   );
 
   // Remove leading step numbers in instructions
-  data.recipeInstructions = data.recipeInstructions.map(
+  data.recipeInstructions = (data.recipeInstructions || []).map(
     i => ({
       text: (i.text || i).replace(/^\d+\.\s*?/, '')
     })
   );
+
+  console.log('Rendering', data);
   
   // Render the recipe
   document.body.innerHTML =
